@@ -1,30 +1,37 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
 
-// Student Pages
+/* ================= LOGIN PAGES ================= */
+import StudentLoginPage from "./pages/student/StudentLoginPage";
+import FacultyLoginPage from "./pages/faculty/FacultyLoginPage";
+import AdminLoginPage from "./pages/admin/AdminLoginPage";
+import RoomAdminLoginPage from "./pages/roomAdmin/RoomAdminLoginPage";
+
+/* ================= STUDENT PAGES ================= */
 import StudentDashboard from "./pages/student/StudentDashboard";
 import RoomList from "./pages/student/RoomList";
 import BookRoom from "./pages/student/BookRoom";
 import MyBookings from "./pages/student/MyBookings";
 import BookingStatus from "./pages/student/BookingStatus";
 
-// Admin Pages
+/* ================= FACULTY PAGES ================= */
+import FacultyDashboard from "./pages/faculty/FacultyDashboard";
+
+/* ================= ADMIN PAGES ================= */
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageRooms from "./pages/admin/ManageRooms";
 import ApproveBookings from "./pages/admin/ApproveBookings";
 
-// Faculty Pages
-import FacultyDashboard from "./pages/faculty/FacultyDashboard";
-
-// Room Admin Pages
+/* ================= ROOM ADMIN PAGES ================= */
 import RoomAdminDashboard from "./pages/roomAdmin/RoomAdminDashboard";
 
-// Temporary role (will come from backend after login)
-const userRole = "ROOM_ADMIN";
-// or "FACULTY"
-// or "ROOM_ADMIN"
+/* ===================================================
+   TEMP: This will come from backend / AuthContext later
+=================================================== */
+const userRole = "STUDENT";
+// "STUDENT" | "FACULTY" | "ADMIN" | "ROOM_ADMIN"
 
-
-// Simple Protected Route (RBAC)
+/* ================= RBAC PROTECTED ROUTE ================= */
 function ProtectedRoute({ allowedRole, children }) {
   if (userRole !== allowedRole) {
     return <Navigate to="/" replace />;
@@ -37,19 +44,18 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* Default Route */}
-        <Route
-          path="/"
-          element={
-            <div style={{ padding: "2rem", textAlign: "center" }}>
-              <h1>Classroom, Lab & Hall Booking System</h1>
-              <p>React frontend setup using Vite is successful.</p>
-              <p>Student module loaded.</p>
-            </div>
-          }
-        />
+        {/* ============== PUBLIC ROUTES ============== */}
 
-        {/* Student Routes */}
+        {/* Role Selection Page */}
+        <Route path="/" element={<LoginPage />} />
+
+        {/* Individual Login Pages */}
+        <Route path="/student-login" element={<StudentLoginPage />} />
+        <Route path="/faculty-login" element={<FacultyLoginPage />} />
+        <Route path="/admin-login" element={<AdminLoginPage />} />
+        <Route path="/room-admin-login" element={<RoomAdminLoginPage />} />
+
+        {/* ============== STUDENT ROUTES ============== */}
         <Route
           path="/student"
           element={
@@ -58,7 +64,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/student/rooms"
           element={
@@ -67,7 +72,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/student/book"
           element={
@@ -76,7 +80,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/student/bookings"
           element={
@@ -85,7 +88,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/student/status"
           element={
@@ -94,7 +96,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-                {/* Faculty Routes */}
+
+        {/* ============== FACULTY ROUTES ============== */}
         <Route
           path="/faculty"
           element={
@@ -104,7 +107,7 @@ function App() {
           }
         />
 
-        {/* Admin Routes */}
+        {/* ============== ADMIN ROUTES ============== */}
         <Route
           path="/admin"
           element={
@@ -113,7 +116,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/admin/rooms"
           element={
@@ -122,7 +124,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/admin/approve"
           element={
@@ -132,7 +133,7 @@ function App() {
           }
         />
 
-        {/* Room Admin Routes */}
+        {/* ============== ROOM ADMIN ROUTES ============== */}
         <Route
           path="/room-admin"
           element={
@@ -141,6 +142,10 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* ============== FALLBACK ROUTE ============== */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </BrowserRouter>
   );

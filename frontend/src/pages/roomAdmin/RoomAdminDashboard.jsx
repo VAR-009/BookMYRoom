@@ -5,7 +5,7 @@ export default function RoomAdminDashboard() {
       <p>Approve bookings for assigned rooms</p>
 
       <div style={{
-        background: "#fff",
+        background: "#2e0dc1",
         padding: "1.5rem",
         borderRadius: "10px",
         boxShadow: "0 4px 10px rgba(0,0,0,0.08)"
