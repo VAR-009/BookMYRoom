@@ -3,7 +3,7 @@ export default function StudentLayout({ title, student, children }) {
     <div style={styles.page}>
       {/* Top Navbar */}
       <header style={styles.navbar}>
-        <h2 style={styles.logo}>NITC Room Booking</h2>
+        <h2 style={styles.logo}>bookMYRoom</h2>
         <div style={styles.userBadge}>
           Student
         </div>
@@ -11,9 +11,9 @@ export default function StudentLayout({ title, student, children }) {
 
       {/* Main Content */}
       <main style={styles.main}>
-        <h1 style={styles.title}>{title}</h1>
+        {/* <h1 style={styles.title}>{title}</h1> */}
 
-        {/* Student Info Card */}
+        {/* Student Info Card
         {student && (
           <div style={styles.profileCard}>
             <div>
@@ -26,7 +26,7 @@ export default function StudentLayout({ title, student, children }) {
               <strong>Branch:</strong> {student.branch}
             </div>
           </div>
-        )}
+        )} */}
 
         {children}
       </main>
