@@ -28,7 +28,7 @@ import RoomAdminDashboard from "./pages/roomAdmin/RoomAdminDashboard";
 /* ===================================================
    TEMP: This will come from backend / AuthContext later
 =================================================== */
-const userRole = "STUDENT";
+const userRole = "ADMIN";
 // "STUDENT" | "FACULTY" | "ADMIN" | "ROOM_ADMIN"
 
 /* ================= RBAC PROTECTED ROUTE ================= */

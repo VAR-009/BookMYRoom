@@ -1,4 +1,8 @@
+import { useNavigate } from "react-router-dom";
+
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+
   const containerStyle = {
     minHeight: "100vh",
     width: "100vw",
@@ -29,13 +33,19 @@ export default function AdminDashboard() {
     color: "white",
   };
 
-  const headerStyle = {
-    color: "white",
-    marginBottom: "0.5rem",
+  // Button styling to match the cards
+  const buttonCardStyle = {
+    ...cardStyle,
+    width: "100%",
+    textAlign: "left",
+    border: "none",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    transition: "transform 0.2s ease, background 0.2s ease",
   };
 
-  const subheaderStyle = {
-    color: "rgba(255,255,255,0.9)",
+  const headerStyle = {
+    color: "white",
     marginBottom: "2rem",
   };
 
@@ -43,12 +53,23 @@ export default function AdminDashboard() {
     <div style={containerStyle}>
       <div style={contentStyle}>
         <h1 style={headerStyle}>Admin Dashboard</h1>
-        
 
-        <div style={cardStyle}>
+        {/* UPDATED: Path now matches the "/admin/rooms" from your App.jsx */}
+        <button 
+          style={buttonCardStyle} 
+          onClick={() => navigate("/admin/rooms")} 
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "translateY(-5px)";
+            e.currentTarget.style.background = "#6b22d6";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.background = "#571cb6";
+          }}
+        >
           <h3>Manage Rooms</h3>
           <p>Add, update, or remove classrooms, labs, and halls.</p>
-        </div>
+        </button>
 
         <div style={cardStyle}>
           <h3>Approve / Reject Bookings</h3>
