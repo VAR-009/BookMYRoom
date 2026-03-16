@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { db } from '../firebase';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, query } from 'firebase/firestore';
 
 export interface Lock {
   id: string;
@@ -12,31 +14,44 @@ export interface Lock {
 
 interface LocksContextType {
   locks: Lock[];
-  addLock: (lock: Lock) => void;
-  removeLock: (id: string) => void;
+  addLock: (lock: Omit<Lock, 'id'>) => Promise<void>;
+  removeLock: (id: string) => Promise<void>;
 }
 
 const LocksContext = createContext<LocksContextType | undefined>(undefined);
 
 export const LocksProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [locks, setLocks] = useState<Lock[]>([
-    {
-      id: '1',
-      roomId: '101',
-      roomName: 'Lecture Hall A',
-      date: '2023-10-25',
-      startTime: '09:00',
-      endTime: '12:00',
-      reason: 'Projector Maintenance'
-    }
-  ]);
+  const [locks, setLocks] = useState<Lock[]>([]);
 
-  const addLock = (lock: Lock) => {
-    setLocks(prev => [...prev, lock]);
+  useEffect(() => {
+    const q = query(collection(db, 'locks'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const locksData: Lock[] = [];
+      snapshot.forEach((doc) => {
+        locksData.push({ id: doc.id, ...doc.data() } as Lock);
+      });
+      setLocks(locksData);
+    }, (error) => {
+      console.error("Firestore Error in LocksContext: ", error);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const addLock = async (lock: Omit<Lock, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'locks'), lock);
+    } catch (error) {
+      console.error("Error adding lock: ", error);
+    }
   };
 
-  const removeLock = (id: string) => {
-    setLocks(prev => prev.filter(lock => lock.id !== id));
+  const removeLock = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'locks', id));
+    } catch (error) {
+      console.error("Error removing lock: ", error);
+    }
   };
 
   return (

@@ -1,30 +1,30 @@
 import React, { useState } from 'react';
 import { Icons } from '../components/Icons';
 import { useLocks, Lock } from '../contexts/LocksContext';
-
-// Mock rooms data - in a real app this would come from an API or context
-const ROOMS = [
-  { id: '101', name: 'ELHC 401' },
-  { id: '102', name: 'ELHC 402' },
-  { id: '201', name: 'SSL' },
-  { id: '202', name: 'NSL' },
-  { id: '301', name: 'CSED Seminar Hall' },
-];
+import { useRooms } from '../contexts/RoomContext';
 
 export const ManageLocks: React.FC = () => {
   const { locks, addLock, removeLock } = useLocks();
-  const [selectedRoom, setSelectedRoom] = useState(ROOMS[0].id);
+  const { rooms } = useRooms();
+  const [selectedRoomId, setSelectedRoomId] = useState('');
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
 
+  // Set initial room if rooms are loaded
+  React.useEffect(() => {
+    if (rooms.length > 0 && !selectedRoomId) {
+      setSelectedRoomId(rooms[0].id);
+    }
+  }, [rooms, selectedRoomId]);
+
   const handleAddLock = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!date || !startTime || !endTime || !reason) {
+    if (!selectedRoomId || !date || !startTime || !endTime || !reason) {
       setError('Please fill in all fields');
       return;
     }
@@ -34,11 +34,10 @@ export const ManageLocks: React.FC = () => {
       return;
     }
 
-    const room = ROOMS.find(r => r.id === selectedRoom);
+    const room = rooms.find(r => r.id === selectedRoomId);
     
-    const newLock: Lock = {
-      id: Date.now().toString(),
-      roomId: selectedRoom,
+    const newLock: Omit<Lock, 'id'> = {
+      roomId: selectedRoomId,
       roomName: room ? room.name : 'Unknown Room',
       date,
       startTime,
@@ -46,7 +45,7 @@ export const ManageLocks: React.FC = () => {
       reason
     };
 
-    addLock(newLock);
+    addLock(newLock as Lock);
     
     // Reset form
     setDate('');
@@ -79,11 +78,11 @@ export const ManageLocks: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Room</label>
                 <select
-                  value={selectedRoom}
-                  onChange={(e) => setSelectedRoom(e.target.value)}
+                  value={selectedRoomId}
+                  onChange={(e) => setSelectedRoomId(e.target.value)}
                   className="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-brand focus:border-brand sm:text-sm"
                 >
-                  {ROOMS.map(room => (
+                  {rooms.map(room => (
                     <option key={room.id} value={room.id}>{room.name}</option>
                   ))}
                 </select>

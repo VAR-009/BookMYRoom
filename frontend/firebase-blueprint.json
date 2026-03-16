@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and role information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "faculty", "admin"] },
+        "department": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Inactive", "Pending"] },
+        "avatar": { "type": "string" }
+      },
+      "required": ["id", "name", "email", "role"]
+    },
+
+    "Room": {
+      "title": "Room",
+      "description": "Room details and availability",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "capacity": { "type": "number" },
+        "location": { "type": "string" },
+        "amenities": { "type": "array", "items": { "type": "string" } },
+        "image": { "type": "string" },
+        "status": { "type": "string", "enum": ["Available", "Maintenance", "Occupied"] },
+        "adminUid": { "type": "string" }
+      },
+      "required": ["id", "name", "type", "capacity", "location", "status"]
+    },
+
+    "Booking": {
+      "title": "Booking",
+      "description": "Room booking request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "roomId": { "type": "string" },
+        "roomName": { "type": "string" },
+        "roomType": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "status": { "type": "string", "enum": ["Approved", "Pending", "Rejected", "Cancelled", "Completed"] },
+        "purpose": { "type": "string" },
+        "userRole": { "type": "string" },
+        "userName": { "type": "string" },
+        "userUid": { "type": "string" },
+        "approvedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "roomId", "roomName", "date", "time", "status", "userUid"]
+    },
+
+    "Lock": {
+      "title": "Lock",
+      "description": "Room lock/maintenance schedule",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "roomId": { "type": "string" },
+        "roomName": { "type": "string" },
+        "date": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "reason": { "type": "string" }
+      },
+      "required": ["id", "roomId", "roomName", "date", "startTime", "endTime"]
+    }
+  },
+
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Room inventory"
+    },
+
+    "/bookings/{bookingId}": {
+      "schema": "Booking",
+      "description": "Booking requests"
+    },
+
+    "/locks/{lockId}": {
+      "schema": "Lock",
+      "description": "Room locks"
+    }
+  }
+}

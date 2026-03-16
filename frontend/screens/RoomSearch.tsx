@@ -1,145 +1,38 @@
 import React, { useState } from 'react';
 import { Icons } from '../components/Icons';
 import { Room } from '../types';
+import { useRooms } from '../contexts/RoomContext';
 
 interface RoomSearchProps {
   onNext: (room: Room) => void;
 }
 
-const MOCK_ROOMS: Room[] = [
-  {
-    id: '1',
-    name: 'SSL',
-    type: 'Computer Lab',
-    capacity: 60,
-    amenities: ['High-spec PCs', 'Projector', 'AC'],
-    status: 'Available',
-    location: 'CSED Building',
-    image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '2',
-    name: 'NSL',
-    type: 'Computer Lab',
-    capacity: 60,
-    amenities: ['High-spec PCs', 'Projector', 'AC'],
-    status: 'Available',
-    location: 'CSED Building',
-    image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '3',
-    name: 'BDL',
-    type: 'Computer Lab',
-    capacity: 60,
-    amenities: ['High-spec PCs', 'Projector', 'AC'],
-    status: 'Available',
-    location: 'CSED Building',
-    image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '4',
-    name: 'CSED Seminar Hall',
-    type: 'Department Hall',
-    capacity: 100,
-    amenities: ['Audio System', 'Projector', 'AC'],
-    status: 'Available',
-    location: 'CSED Building',
-    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '5',
-    name: 'APJ Hall',
-    type: 'Department Hall',
-    capacity: 150,
-    amenities: ['Audio System', 'Projector', 'AC', 'Stage'],
-    status: 'Available',
-    location: 'CSED Building',
-    image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '6',
-    name: 'Discussion Room',
-    type: 'Department Hall',
-    capacity: 20,
-    amenities: ['Whiteboard', 'Round Table', 'AC'],
-    status: 'Available',
-    location: 'CSED Building',
-    image: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '7',
-    name: 'ELHC 401',
-    type: 'Classroom',
-    capacity: 60,
-    amenities: ['Projector', 'Blackboard'],
-    status: 'Available',
-    location: 'Lecture Hall Complex',
-    image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '8',
-    name: 'ELHC 402',
-    type: 'Classroom',
-    capacity: 60,
-    amenities: ['Projector', 'Blackboard'],
-    status: 'Available',
-    location: 'Lecture Hall Complex',
-    image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '9',
-    name: 'ELHC 403',
-    type: 'Classroom',
-    capacity: 60,
-    amenities: ['Projector', 'Blackboard'],
-    status: 'Available',
-    location: 'Lecture Hall Complex',
-    image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '10',
-    name: 'ELHC 404',
-    type: 'Classroom',
-    capacity: 60,
-    amenities: ['Projector', 'Blackboard'],
-    status: 'Available',
-    location: 'Lecture Hall Complex',
-    image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '11',
-    name: 'Aryabhatta',
-    type: 'Institute Hall',
-    capacity: 500,
-    amenities: ['Audio System', 'Projector', 'AC', 'Stage', 'Balcony'],
-    status: 'Available',
-    location: 'Main Building',
-    image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '12',
-    name: 'Chanakya',
-    type: 'Institute Hall',
-    capacity: 400,
-    amenities: ['Audio System', 'Projector', 'AC', 'Stage'],
-    status: 'Available',
-    location: 'Main Building',
-    image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  },
-  {
-    id: '13',
-    name: 'Bhaskara',
-    type: 'Institute Hall',
-    capacity: 400,
-    amenities: ['Audio System', 'Projector', 'AC', 'Stage'],
-    status: 'Available',
-    location: 'Main Building',
-    image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-  }
-];
-
 export const RoomSearch: React.FC<RoomSearchProps> = ({ onNext }) => {
+  const { rooms, loading } = useRooms();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+
+  const filteredRooms = rooms.filter(room => {
+    const matchesSearch = room.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         room.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = selectedTypes.length === 0 || selectedTypes.includes(room.type);
+    return matchesSearch && matchesType;
+  });
+
+  const handleTypeToggle = (type: string) => {
+    setSelectedTypes(prev => 
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
       {/* Stepper */}
@@ -171,21 +64,37 @@ export const RoomSearch: React.FC<RoomSearchProps> = ({ onNext }) => {
             <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
               <Icons.Search className="h-5 w-5" />
             </span>
-            <input type="text" className="w-full pl-10 pr-4 py-3 rounded-xl border-gray-200 bg-white shadow-sm focus:ring-brand focus:border-brand" placeholder="Search by name or code..." />
+            <input 
+              type="text" 
+              className="w-full pl-10 pr-4 py-3 rounded-xl border-gray-200 bg-white shadow-sm focus:ring-brand focus:border-brand" 
+              placeholder="Search by name or code..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="font-semibold text-lg">Filters</h2>
-              <button className="text-sm text-brand hover:text-blue-700 font-medium">Reset</button>
+              <button 
+                onClick={() => { setSearchQuery(''); setSelectedTypes([]); }}
+                className="text-sm text-brand hover:text-blue-700 font-medium"
+              >
+                Reset
+              </button>
             </div>
             
             <div>
                <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Room Type</h3>
                <div className="space-y-3">
                  {['Computer Lab', 'Department Hall', 'Classroom', 'Institute Hall'].map(t => (
-                   <label key={t} className="flex items-center">
-                     <input type="checkbox" className="h-4 w-4 text-brand border-gray-300 rounded focus:ring-brand" defaultChecked={t === 'Classroom'} />
+                   <label key={t} className="flex items-center cursor-pointer">
+                     <input 
+                        type="checkbox" 
+                        className="h-4 w-4 text-brand border-gray-300 rounded focus:ring-brand" 
+                        checked={selectedTypes.includes(t)}
+                        onChange={() => handleTypeToggle(t)}
+                      />
                      <span className="ml-3 text-sm text-gray-600">{t}</span>
                    </label>
                  ))}
@@ -199,7 +108,7 @@ export const RoomSearch: React.FC<RoomSearchProps> = ({ onNext }) => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Available Rooms</h1>
-              <p className="text-sm text-gray-500 mt-1">Found <span className="font-medium text-gray-900">6</span> spaces matching your criteria</p>
+              <p className="text-sm text-gray-500 mt-1">Found <span className="font-medium text-gray-900">{filteredRooms.length}</span> spaces matching your criteria</p>
             </div>
             <div className="flex items-center gap-2">
                <span className="text-sm text-gray-500">Sort by:</span>
@@ -211,10 +120,10 @@ export const RoomSearch: React.FC<RoomSearchProps> = ({ onNext }) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {MOCK_ROOMS.map((room) => (
+            {filteredRooms.map((room) => (
               <div key={room.id} className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col">
                 <div className="relative h-48 overflow-hidden">
-                  <img src={room.image} alt={room.name} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" />
+                  <img src={room.image} alt={room.name} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500" referrerPolicy="no-referrer" />
                   <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded text-xs font-semibold text-gray-900 uppercase tracking-wide shadow-sm">
                     {room.type}
                   </div>
@@ -244,8 +153,16 @@ export const RoomSearch: React.FC<RoomSearchProps> = ({ onNext }) => {
                   </div>
 
                   <div className="mt-auto">
-                    <button onClick={() => onNext(room)} className="w-full py-2.5 px-4 bg-white border border-brand text-brand hover:bg-brand hover:text-white font-medium rounded-lg transition-colors shadow-sm">
-                      Book Room
+                    <button 
+                      onClick={() => onNext(room)} 
+                      disabled={room.status !== 'Available'}
+                      className={`w-full py-2.5 px-4 font-medium rounded-lg transition-colors shadow-sm ${
+                        room.status === 'Available' 
+                        ? 'bg-white border border-brand text-brand hover:bg-brand hover:text-white' 
+                        : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {room.status === 'Available' ? 'Book Room' : 'Unavailable'}
                     </button>
                   </div>
                 </div>

@@ -1,0 +1,97 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===================================================
+    // Helper Functions
+    // ===================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUser() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUser().role == "admin";
+    }
+
+    function isFaculty() {
+      return isAuthenticated() && (getUser().role == "faculty" || getUser().role == "admin");
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // ===================================================
+    // USERS COLLECTION
+    // ===================================================
+
+    match /users/{userId} {
+
+      // anyone logged in can read users
+      allow read: if isAuthenticated();
+
+      // users can create their own profile
+      allow create: if isOwner(userId);
+
+      // user can update their own profile
+      allow update: if isOwner(userId) || isAdmin();
+
+      // only admin can delete users
+      allow delete: if isAdmin();
+    }
+
+    // ===================================================
+    // ROOMS COLLECTION
+    // ===================================================
+
+    match /rooms/{roomId} {
+
+      // everyone logged in can view rooms
+      allow read: if isAuthenticated();
+
+      // only admin can create/update rooms
+      allow write: if isAdmin();
+    }
+
+    // ===================================================
+    // BOOKINGS COLLECTION
+    // ===================================================
+
+    match /bookings/{bookingId} {
+
+      // everyone logged in can view bookings
+      allow read: if isAuthenticated();
+
+      // students create booking
+      allow create: if isAuthenticated() &&
+                    request.resource.data.userUid == request.auth.uid;
+
+      // faculty or admin approve/reject booking
+      allow update: if isFaculty() ||
+                    resource.data.userUid == request.auth.uid;
+
+      // user can cancel own booking
+      allow delete: if isOwner(resource.data.userUid) || isAdmin();
+    }
+
+    // ===================================================
+    // LOCKS COLLECTION
+    // ===================================================
+
+    match /locks/{lockId} {
+
+      // everyone can read
+      allow read: if isAuthenticated();
+
+      // only admin can lock rooms
+      allow write: if isAdmin();
+    }
+
+  }
+}

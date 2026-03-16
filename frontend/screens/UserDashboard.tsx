@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icons } from '../components/Icons';
 import { useBooking } from '../contexts/BookingContext';
+import { auth } from '../firebase';
 
 interface DashboardProps {
   role: 'student' | 'faculty';
@@ -9,15 +10,18 @@ interface DashboardProps {
 
 export const UserDashboard: React.FC<DashboardProps> = ({ role, onNavigate }) => {
   const { bookings, cancelBooking } = useBooking();
+  const currentUser = auth.currentUser;
 
-  const myBookings = bookings.filter(b => b.userRole === role);
+  const myBookings = bookings.filter(b => b.userUid === currentUser?.uid);
   const upcomingBookings = myBookings.filter(b => b.status === 'Approved');
   const pendingRequests = myBookings.filter(b => b.status === 'Pending');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900">Welcome back, {role === 'student' ? 'Alex' : 'Professor'}</h2>
+        <h2 className="text-3xl font-bold text-gray-900">
+          Welcome back, {currentUser?.displayName || (role === 'student' ? 'Student' : 'Professor')}
+        </h2>
         <p className="text-gray-600">You have <span className="font-semibold text-brand">{upcomingBookings.length} upcoming bookings</span> this week.</p>
       </div>
 

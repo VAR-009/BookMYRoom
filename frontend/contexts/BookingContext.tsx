@@ -1,97 +1,141 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Booking } from '../types';
+import { db } from '../firebase';
+
+import {
+collection,
+onSnapshot,
+addDoc,
+updateDoc,
+doc,
+query,
+orderBy,
+serverTimestamp
+} from 'firebase/firestore';
 
 interface BookingContextType {
-  bookings: Booking[];
-  addBooking: (booking: Booking) => void;
-  cancelBooking: (id: string) => void;
-  updateBookingStatus: (id: string, status: Booking['status']) => void;
+bookings: Booking[];
+addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
+cancelBooking: (id: string) => Promise<void>;
+updateBookingStatus: (
+id: string,
+status: Booking['status'],
+approvedBy?: string
+) => Promise<void>;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
 export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: '1',
-      roomName: 'ELHC 401',
-      roomType: 'Classroom',
-      purpose: 'Group Study Session',
-      date: 'Today',
-      time: '14:00 - 16:00',
-      status: 'Approved',
-      userRole: 'student',
-      userName: 'Alex'
-    },
-    {
-      id: '2',
-      roomName: 'Aryabhatta',
-      roomType: 'Institute Hall',
-      purpose: 'CS-101 Introduction',
-      date: 'Tomorrow',
-      time: '09:00 - 10:30',
-      status: 'Approved',
-      userRole: 'faculty',
-      userName: 'Prof. Grant'
-    },
-    {
-      id: '3',
-      roomName: 'SSL',
-      roomType: 'Computer Lab',
-      purpose: 'Fossil Cleaning', // Maybe change purpose to match Computer Lab? Keeping it for now as user didn't ask to change purpose.
-      date: 'Today',
-      time: '18:00 - 20:00',
-      status: 'Pending',
-      userRole: 'student',
-      userName: 'Sarah Jenkins'
-    },
-    {
-      id: '4',
-      roomName: 'CSED Seminar Hall',
-      roomType: 'Department Hall',
-      purpose: 'Research Team Meeting',
-      date: 'Tomorrow',
-      time: '10:00 - 11:00',
-      status: 'Pending',
-      userRole: 'faculty',
-      userName: 'Dr. Michael Chen'
-    },
-    {
-       id: '5',
-       roomName: 'NSL',
-       roomType: 'Computer Lab',
-       purpose: 'Chemistry Experiment', // Maybe change purpose? Keeping it.
-       date: 'Next Monday',
-       time: '14:00 - 16:00',
-       status: 'Pending',
-       userRole: 'student',
-       userName: 'Emily Davis'
-    }
-  ]);
 
-  const addBooking = (booking: Booking) => {
-    setBookings(prev => [booking, ...prev]);
-  };
+const [bookings, setBookings] = useState<Booking[]>([]);
 
-  const cancelBooking = (id: string) => {
-    setBookings(prev => prev.filter(b => b.id !== id));
-  };
+useEffect(() => {
 
-  const updateBookingStatus = (id: string, status: Booking['status']) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
-  };
+const bookingsRef = collection(db, 'bookings');
 
-  return (
-    <BookingContext.Provider value={{ bookings, addBooking, cancelBooking, updateBookingStatus }}>
-      {children}
-    </BookingContext.Provider>
-  );
+const q = query(bookingsRef, orderBy('createdAt', 'desc'));
+
+const unsubscribe = onSnapshot(q, (snapshot) => {
+
+  const bookingsData: Booking[] = snapshot.docs.map((docSnap) => {
+
+    const data = docSnap.data();
+
+    return {
+      id: docSnap.id,
+      ...data
+    } as Booking;
+
+  });
+
+  setBookings(bookingsData);
+
+});
+
+return () => unsubscribe();
+
+}, []);
+
+const addBooking = async (booking: Omit<Booking, 'id'>) => {
+
+try {
+
+  await addDoc(collection(db, 'bookings'), {
+    ...booking,
+    status: 'Pending',
+    createdAt: serverTimestamp()
+  });
+
+} catch (error) {
+  console.error("Error adding booking:", error);
+}
+
+};
+
+const cancelBooking = async (id: string) => {
+
+
+try {
+
+  const bookingRef = doc(db, 'bookings', id);
+
+  await updateDoc(bookingRef, {
+    status: 'Cancelled'
+  });
+
+} catch (error) {
+  console.error("Error cancelling booking:", error);
+}
+
+};
+
+const updateBookingStatus = async (
+id: string,
+status: Booking['status'],
+approvedBy?: string
+) => {
+
+
+try {
+
+  const bookingRef = doc(db, 'bookings', id);
+
+  await updateDoc(bookingRef, {
+    status,
+    approvedBy: approvedBy || null
+  });
+
+} catch (error) {
+  console.error("Error updating booking status:", error);
+}
+
+
+};
+
+return (
+<BookingContext.Provider
+value={{
+bookings,
+addBooking,
+cancelBooking,
+updateBookingStatus
+}}
+>
+{children}
+</BookingContext.Provider>
+);
+
 };
 
 export const useBooking = () => {
-  const context = useContext(BookingContext);
-  if (context === undefined) {
-    throw new Error('useBooking must be used within a BookingProvider');
-  }
-  return context;
+
+const context = useContext(BookingContext);
+
+if (!context) {
+throw new Error('useBooking must be used within a BookingProvider');
+}
+
+return context;
+
 };

@@ -1,17 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Icons } from './Icons';
-import { UserRole } from '../types';
+import { UserRole, User } from '../types';
+import { auth } from '../firebase';
 
 interface NavbarProps {
   role: UserRole;
   activeTab: string;
   onLogout: () => void;
   onNavigate: (view: string) => void;
+  user?: User | null;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNavigate }) => {
+export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNavigate, user }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const currentUser = auth.currentUser;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -33,22 +36,28 @@ export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNav
   };
 
   const getUserName = () => {
+    if (user?.name) return user.name;
+    if (currentUser?.displayName) return currentUser.displayName;
     switch (role) {
-      case 'admin': return 'Dr. Admin User';
-      case 'faculty': return 'Dr. Sarah Jenkins';
-      case 'room_admin': return 'Staff. Mark Operations';
-      case 'faculty_admin': return 'Prof. Alan Grant';
-      default: return 'Alex Student';
+      case 'admin': return 'Admin User';
+      case 'faculty': return 'Faculty Member';
+      case 'room_admin': return 'Room Admin';
+      case 'faculty_admin': return 'Faculty Admin';
+      default: return 'Student User';
     }
   };
 
   const getUserInitials = () => {
+    const name = user?.name || currentUser?.displayName;
+    if (name) {
+      return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    }
     switch (role) {
-      case 'admin': return 'DA';
-      case 'faculty': return 'SJ';
-      case 'room_admin': return 'MO';
-      case 'faculty_admin': return 'AG';
-      default: return 'AS';
+      case 'admin': return 'AD';
+      case 'faculty': return 'FA';
+      case 'room_admin': return 'RA';
+      case 'faculty_admin': return 'FA';
+      default: return 'ST';
     }
   };
 
@@ -84,17 +93,6 @@ export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNav
               {isSettingsOpen && (
                 <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                   <div className="py-1" role="menu" aria-orientation="vertical">
-                    <button
-                      onClick={() => {
-                        setIsSettingsOpen(false);
-                        onNavigate('change_password');
-                      }}
-                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      role="menuitem"
-                    >
-                      <Icons.Lock className="mr-3 h-4 w-4 text-gray-400" />
-                      Change Password
-                    </button>
                     <button
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-not-allowed opacity-70"
                       role="menuitem"

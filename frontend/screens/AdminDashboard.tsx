@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { Icons } from '../components/Icons';
 import { Modal } from '../components/Modal';
 import { AddRoomModal } from '../components/AddRoomModal';
 import { AddUserModal } from '../components/AddUserModal';
 import { Room, User } from '../types';
+import { useRooms } from '../contexts/RoomContext';
+import { collection, onSnapshot, query, addDoc, doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 type AdminView = 'dashboard' | 'users' | 'inventory' | 'bookings';
 
@@ -13,189 +16,44 @@ export const AdminDashboard: React.FC = () => {
   const [isRoomModalOpen, setRoomModalOpen] = useState(false);
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Partial<Room> | undefined>(undefined);
+  const [users, setUsers] = useState<User[]>([]);
+  const { rooms, addRoom, updateRoom } = useRooms();
 
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      name: 'Sarah Jenkins',
-      email: 'sarah.j@uni.edu',
-      role: 'Student',
-      department: 'Computer Science',
-      status: 'Active',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-    },
-    {
-      id: '2',
-      name: 'Dr. Michael Chen',
-      email: 'm.chen@uni.edu',
-      role: 'Faculty',
-      department: 'Engineering',
-      status: 'Active',
-      avatar: 'https://ui-avatars.com/api/?name=Michael+Chen&background=random'
-    }
-  ]);
+  useEffect(() => {
+    const q = query(collection(db, 'users'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as User[];
+      setUsers(usersData);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const [rooms, setRooms] = useState<Room[]>([
-    {
-      id: '1',
-      name: 'SSL',
-      type: 'Computer Lab',
-      capacity: 60,
-      amenities: ['High-spec PCs', 'Projector', 'AC'],
-      status: 'Available',
-      location: 'CSED Building',
-      image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '2',
-      name: 'NSL',
-      type: 'Computer Lab',
-      capacity: 60,
-      amenities: ['High-spec PCs', 'Projector', 'AC'],
-      status: 'Available',
-      location: 'CSED Building',
-      image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '3',
-      name: 'BDL',
-      type: 'Computer Lab',
-      capacity: 60,
-      amenities: ['High-spec PCs', 'Projector', 'AC'],
-      status: 'Available',
-      location: 'CSED Building',
-      image: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '4',
-      name: 'CSED Seminar Hall',
-      type: 'Department Hall',
-      capacity: 100,
-      amenities: ['Audio System', 'Projector', 'AC'],
-      status: 'Available',
-      location: 'CSED Building',
-      image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '5',
-      name: 'APJ Hall',
-      type: 'Department Hall',
-      capacity: 150,
-      amenities: ['Audio System', 'Projector', 'AC', 'Stage'],
-      status: 'Available',
-      location: 'CSED Building',
-      image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '6',
-      name: 'Discussion Room',
-      type: 'Department Hall',
-      capacity: 20,
-      amenities: ['Whiteboard', 'Round Table', 'AC'],
-      status: 'Available',
-      location: 'CSED Building',
-      image: 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '7',
-      name: 'ELHC 401',
-      type: 'Classroom',
-      capacity: 60,
-      amenities: ['Projector', 'Blackboard'],
-      status: 'Available',
-      location: 'Lecture Hall Complex',
-      image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '8',
-      name: 'ELHC 402',
-      type: 'Classroom',
-      capacity: 60,
-      amenities: ['Projector', 'Blackboard'],
-      status: 'Available',
-      location: 'Lecture Hall Complex',
-      image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '9',
-      name: 'ELHC 403',
-      type: 'Classroom',
-      capacity: 60,
-      amenities: ['Projector', 'Blackboard'],
-      status: 'Available',
-      location: 'Lecture Hall Complex',
-      image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '10',
-      name: 'ELHC 404',
-      type: 'Classroom',
-      capacity: 60,
-      amenities: ['Projector', 'Blackboard'],
-      status: 'Available',
-      location: 'Lecture Hall Complex',
-      image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '11',
-      name: 'Aryabhatta',
-      type: 'Institute Hall',
-      capacity: 500,
-      amenities: ['Audio System', 'Projector', 'AC', 'Stage', 'Balcony'],
-      status: 'Available',
-      location: 'Main Building',
-      image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '12',
-      name: 'Chanakya',
-      type: 'Institute Hall',
-      capacity: 400,
-      amenities: ['Audio System', 'Projector', 'AC', 'Stage'],
-      status: 'Available',
-      location: 'Main Building',
-      image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      id: '13',
-      name: 'Bhaskara',
-      type: 'Institute Hall',
-      capacity: 400,
-      amenities: ['Audio System', 'Projector', 'AC', 'Stage'],
-      status: 'Available',
-      location: 'Main Building',
-      image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'
-    }
-  ]);
-
-  const handleSaveRoom = (roomData: Partial<Room>) => {
+  const handleSaveRoom = async (roomData: Partial<Room>) => {
     if (editingRoom && editingRoom.id) {
-      // Edit existing room
-      setRooms(prevRooms => prevRooms.map(room => 
-        room.id === editingRoom.id ? { ...room, ...roomData } as Room : room
-      ));
+      await updateRoom(editingRoom.id, roomData);
     } else {
-      // Add new room
-      const newRoom: Room = {
-        id: Math.random().toString(36).substr(2, 9),
+      await addRoom({
         name: roomData.name || 'New Room',
         location: roomData.location || 'Science Block A',
         type: roomData.type || 'Classroom',
         amenities: roomData.amenities || [],
         status: 'Available',
         capacity: roomData.capacity || 0,
-        image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80', // Default image
+        image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
         ...roomData
-      } as Room;
-      setRooms(prevRooms => [...prevRooms, newRoom]);
+      } as Omit<Room, 'id'>);
     }
     setRoomModalOpen(false);
     setEditingRoom(undefined);
   };
 
-  const handleSaveUser = (userData: Partial<User>) => {
+  const handleSaveUser = async (userData: Partial<User>) => {
+    const userId = Math.random().toString(36).substr(2, 9);
     const newUser: User = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: userId,
       name: userData.name || 'New User',
       email: userData.email || '',
       role: userData.role || 'Student',
@@ -204,33 +62,36 @@ export const AdminDashboard: React.FC = () => {
       avatar: userData.avatar || `https://ui-avatars.com/api/?name=${userData.name}&background=random`,
       ...userData
     } as User;
-    setUsers(prev => [...prev, newUser]);
+    
+    await setDoc(doc(db, 'users', userId), newUser);
     setUserModalOpen(false);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       const bstr = evt.target?.result;
       const wb = XLSX.read(bstr, { type: 'binary' });
       const wsname = wb.SheetNames[0];
       const ws = wb.Sheets[wsname];
       const data = XLSX.utils.sheet_to_json(ws);
       
-      const newUsers = data.map((row: any) => ({
-        id: Math.random().toString(36).substr(2, 9),
-        name: row.Name || row.name || 'Unknown',
-        email: row.Email || row.email || '',
-        role: row.Role || row.role || 'Student',
-        department: row.Department || row.department || 'General',
-        status: row.Status || row.status || 'Active',
-        avatar: `https://ui-avatars.com/api/?name=${row.Name || row.name || 'User'}&background=random`
-      })) as User[];
-
-      setUsers(prev => [...prev, ...newUsers]);
+      for (const row of data as any[]) {
+        const userId = Math.random().toString(36).substr(2, 9);
+        const newUser = {
+          id: userId,
+          name: row.Name || row.name || 'Unknown',
+          email: row.Email || row.email || '',
+          role: row.Role || row.role || 'Student',
+          department: row.Department || row.department || 'General',
+          status: row.Status || row.status || 'Active',
+          avatar: `https://ui-avatars.com/api/?name=${row.Name || row.name || 'User'}&background=random`
+        };
+        await setDoc(doc(db, 'users', userId), newUser);
+      }
     };
     reader.readAsBinaryString(file);
   };
@@ -339,7 +200,29 @@ export const AdminDashboard: React.FC = () => {
     </div>
   );
 
-  const InventoryTable = () => {
+   const InventoryTable = () => {
+    const { rooms, addRoom, updateRoom, seedRooms, cleanupDuplicates } = useRooms();
+    const [seeding, setSeeding] = useState(false);
+    const [cleaning, setCleaning] = useState(false);
+
+    const handleSeed = async () => {
+      setSeeding(true);
+      try {
+        await seedRooms();
+      } finally {
+        setSeeding(false);
+      }
+    };
+
+    const handleCleanup = async () => {
+      setCleaning(true);
+      try {
+        await cleanupDuplicates();
+      } finally {
+        setCleaning(false);
+      }
+    };
+
     return (
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <div className="p-6 flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-gray-200">
@@ -347,9 +230,25 @@ export const AdminDashboard: React.FC = () => {
                 <h2 className="text-lg font-bold">Room Inventory</h2>
                 <p className="text-sm text-gray-500">Manage physical spaces across campus.</p>
              </div>
-             <button onClick={() => { setEditingRoom(undefined); setRoomModalOpen(true); }} className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                <Icons.Plus className="h-5 w-5" /> Add New Room
-             </button>
+             <div className="flex gap-2">
+               <button 
+                 onClick={handleCleanup} 
+                 disabled={cleaning}
+                 className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+               >
+                  <Icons.Trash2 className="h-5 w-5" /> {cleaning ? 'Cleaning...' : 'Cleanup Duplicates'}
+               </button>
+               <button 
+                 onClick={handleSeed} 
+                 disabled={seeding}
+                 className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+               >
+                  <Icons.Save className="h-5 w-5" /> {seeding ? 'Restoring...' : 'Restore Default Rooms'}
+               </button>
+               <button onClick={() => { setEditingRoom(undefined); setRoomModalOpen(true); }} className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  <Icons.Plus className="h-5 w-5" /> Add New Room
+               </button>
+             </div>
           </div>
           <div className="overflow-x-auto">
              <table className="min-w-full divide-y divide-gray-200">

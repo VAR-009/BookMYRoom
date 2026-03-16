@@ -6,7 +6,7 @@ import {
   Settings, LogOut, Plus, MoreVertical, Edit, 
   Trash2, Monitor, Wifi, Sun, Video, Briefcase,
   Menu, ArrowRight, ShieldCheck, AlertCircle,
-  Lock, Eye, EyeOff, Save, Moon, FileSpreadsheet
+  Lock, Eye, EyeOff, Save, Moon, FileSpreadsheet, Mail
 } from 'lucide-react';
 
 export const Icons = {
@@ -16,5 +16,5 @@ export const Icons = {
   Settings, LogOut, Plus, MoreVertical, Edit, 
   Trash2, Monitor, Wifi, Sun, Video, Briefcase,
   Menu, ArrowRight, ShieldCheck, AlertCircle,
-  Lock, Eye, EyeOff, Save, Moon, FileSpreadsheet
+  Lock, Eye, EyeOff, Save, Moon, FileSpreadsheet, Mail
 };
