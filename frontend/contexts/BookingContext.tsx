@@ -1,141 +1,108 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Booking } from '../types';
-import { db } from '../firebase';
 
-import {
-collection,
-onSnapshot,
-addDoc,
-updateDoc,
-doc,
-query,
-orderBy,
-serverTimestamp
-} from 'firebase/firestore';
+export interface ApiBooking {
+  id: number;
+  roomId: number;
+  roomName: string;
+  roomType: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  purpose: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  userName: string;
+}
 
 interface BookingContextType {
-bookings: Booking[];
-addBooking: (booking: Omit<Booking, 'id'>) => Promise<void>;
-cancelBooking: (id: string) => Promise<void>;
-updateBookingStatus: (
-id: string,
-status: Booking['status'],
-approvedBy?: string
-) => Promise<void>;
+  bookings: ApiBooking[];
+  allBookings: ApiBooking[];
+  loading: boolean;
+  createBooking: (data: { roomId: number; date: string; startTime: string; endTime: string; purpose: string }) => Promise<void>;
+  cancelBooking: (id: number) => Promise<void>;
+  updateBookingStatus: (id: number, status: string) => Promise<void>;
+  refreshBookings: () => void;
+  refreshAllBookings: () => void;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
-export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-
-const [bookings, setBookings] = useState<Booking[]>([]);
-
-useEffect(() => {
-
-const bookingsRef = collection(db, 'bookings');
-
-const q = query(bookingsRef, orderBy('createdAt', 'desc'));
-
-const unsubscribe = onSnapshot(q, (snapshot) => {
-
-  const bookingsData: Booking[] = snapshot.docs.map((docSnap) => {
-
-    const data = docSnap.data();
-
-    return {
-      id: docSnap.id,
-      ...data
-    } as Booking;
-
-  });
-
-  setBookings(bookingsData);
-
+const API = 'http://localhost:8080/api/bookings';
+const getToken = () => localStorage.getItem('token');
+const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${getToken()}`
 });
 
-return () => unsubscribe();
+export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [bookings, setBookings] = useState<ApiBooking[]>([]);
+  const [allBookings, setAllBookings] = useState<ApiBooking[]>([]);
+  const [loading, setLoading] = useState(false);
 
-}, []);
+  const fetchMyBookings = async () => {
+    if (!getToken()) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/my`, { headers: authHeaders() });
+      if (res.ok) setBookings(await res.json());
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const addBooking = async (booking: Omit<Booking, 'id'>) => {
+  const fetchAllBookings = async () => {
+    if (!getToken()) return;
+    try {
+      const res = await fetch(`${API}/all`, { headers: authHeaders() });
+      if (res.ok) setAllBookings(await res.json());
+    } catch {}
+  };
 
-try {
+  useEffect(() => {
+    fetchMyBookings();
+    fetchAllBookings();
+  }, []);
 
-  await addDoc(collection(db, 'bookings'), {
-    ...booking,
-    status: 'Pending',
-    createdAt: serverTimestamp()
-  });
+  const createBooking = async (data: { roomId: number; date: string; startTime: string; endTime: string; purpose: string }) => {
+    const res = await fetch(`${API}/create`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ ...data, roomId: String(data.roomId) })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Booking failed');
+    }
+    await fetchMyBookings();
+  };
 
-} catch (error) {
-  console.error("Error adding booking:", error);
-}
+  const cancelBooking = async (id: number) => {
+    await fetch(`${API}/cancel/${id}`, { method: 'PUT', headers: authHeaders() });
+    await fetchMyBookings();
+  };
 
-};
+  const updateBookingStatus = async (id: number, status: string) => {
+    await fetch(`${API}/status/${id}`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ status })
+    });
+    await fetchAllBookings();
+  };
 
-const cancelBooking = async (id: string) => {
-
-
-try {
-
-  const bookingRef = doc(db, 'bookings', id);
-
-  await updateDoc(bookingRef, {
-    status: 'Cancelled'
-  });
-
-} catch (error) {
-  console.error("Error cancelling booking:", error);
-}
-
-};
-
-const updateBookingStatus = async (
-id: string,
-status: Booking['status'],
-approvedBy?: string
-) => {
-
-
-try {
-
-  const bookingRef = doc(db, 'bookings', id);
-
-  await updateDoc(bookingRef, {
-    status,
-    approvedBy: approvedBy || null
-  });
-
-} catch (error) {
-  console.error("Error updating booking status:", error);
-}
-
-
-};
-
-return (
-<BookingContext.Provider
-value={{
-bookings,
-addBooking,
-cancelBooking,
-updateBookingStatus
-}}
->
-{children}
-</BookingContext.Provider>
-);
-
+  return (
+    <BookingContext.Provider value={{
+      bookings, allBookings, loading,
+      createBooking, cancelBooking, updateBookingStatus,
+      refreshBookings: fetchMyBookings,
+      refreshAllBookings: fetchAllBookings
+    }}>
+      {children}
+    </BookingContext.Provider>
+  );
 };
 
 export const useBooking = () => {
-
-const context = useContext(BookingContext);
-
-if (!context) {
-throw new Error('useBooking must be used within a BookingProvider');
-}
-
-return context;
-
+  const context = useContext(BookingContext);
+  if (!context) throw new Error('useBooking must be used within BookingProvider');
+  return context;
 };

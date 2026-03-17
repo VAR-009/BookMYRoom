@@ -1,20 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Icons } from './Icons';
-import { UserRole, User } from '../types';
-import { auth } from '../firebase';
+import { UserRole } from '../types';
 
 interface NavbarProps {
   role: UserRole;
   activeTab: string;
   onLogout: () => void;
   onNavigate: (view: string) => void;
-  user?: User | null;
+  userName?: string;
+  userEmail?: string;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNavigate, user }) => {
+export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNavigate, userName, userEmail }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
-  const currentUser = auth.currentUser;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -22,11 +21,8 @@ export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNav
         setIsSettingsOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const getLinkClass = (tabName: string) => {
@@ -35,31 +31,27 @@ export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNav
       : "border-transparent text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium h-full transition-colors";
   };
 
-  const getUserName = () => {
-    if (user?.name) return user.name;
-    if (currentUser?.displayName) return currentUser.displayName;
+  const getDisplayName = () => {
+    if (userName && userName.trim()) return userName;
+    const saved = localStorage.getItem('userName');
+    if (saved && saved.trim()) return saved;
     switch (role) {
-      case 'admin': return 'Admin User';
-      case 'faculty': return 'Faculty Member';
+      case 'admin': return 'Admin';
+      case 'faculty': return 'Faculty';
       case 'room_admin': return 'Room Admin';
       case 'faculty_admin': return 'Faculty Admin';
-      default: return 'Student User';
+      default: return 'Student';
     }
   };
 
-  const getUserInitials = () => {
-    const name = user?.name || currentUser?.displayName;
-    if (name) {
-      return name.split(' ').map(n => n[0]).join('').toUpperCase();
-    }
-    switch (role) {
-      case 'admin': return 'AD';
-      case 'faculty': return 'FA';
-      case 'room_admin': return 'RA';
-      case 'faculty_admin': return 'FA';
-      default: return 'ST';
-    }
+  const getInitials = () => {
+    const name = getDisplayName();
+    const parts = name.split(' ').filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    return name.substring(0, 2).toUpperCase();
   };
+
+  const displayName = getDisplayName();
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 h-16">
@@ -80,6 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNav
               </div>
             )}
           </div>
+
           <div className="flex items-center gap-4">
             <div className="relative" ref={settingsRef}>
               <button
@@ -89,15 +82,17 @@ export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNav
               >
                 <Icons.Settings className="h-6 w-6" />
               </button>
-              
               {isSettingsOpen && (
                 <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-                  <div className="py-1" role="menu" aria-orientation="vertical">
+                  <div className="py-1">
                     <button
-                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-not-allowed opacity-70"
-                      role="menuitem"
-                      title="Coming soon"
+                      onClick={() => { setIsSettingsOpen(false); onNavigate('change_password'); }}
+                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
+                      <Icons.Lock className="mr-3 h-4 w-4 text-gray-400" />
+                      Change Password
+                    </button>
+                    <button className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-not-allowed opacity-70">
                       <Icons.Moon className="mr-3 h-4 w-4 text-gray-400" />
                       Dark Mode
                     </button>
@@ -110,18 +105,15 @@ export const Navbar: React.FC<NavbarProps> = ({ role, activeTab, onLogout, onNav
               <Icons.Bell className="h-6 w-6" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
+
             <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">
-                   {getUserName()}
-                </p>
+                <p className="text-sm font-medium text-gray-900">{displayName}</p>
                 <p className="text-xs text-gray-500 capitalize">{role.replace('_', ' ')}</p>
               </div>
-              <button className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden ring-2 ring-transparent hover:ring-brand transition-all">
-                <span className="font-bold text-gray-600 text-xs">
-                  {getUserInitials()}
-                </span>
-              </button>
+              <div className="h-8 w-8 rounded-full bg-brand flex items-center justify-center ring-2 ring-transparent hover:ring-brand transition-all">
+                <span className="font-bold text-white text-xs">{getInitials()}</span>
+              </div>
               <button onClick={onLogout} className="text-gray-400 hover:text-red-500 ml-2">
                 <Icons.LogOut className="h-5 w-5" />
               </button>
