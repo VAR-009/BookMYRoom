@@ -37,3 +37,4 @@ dist-ssr
 
 # Backend build artifacts
 backend/bin/
+backend/src/main/resources/application.properties
