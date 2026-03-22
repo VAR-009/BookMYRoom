@@ -8,6 +8,7 @@ import com.nitc.bookmyroom.repository.BookingRepository;
 import com.nitc.bookmyroom.repository.RoomLockRepository;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -25,7 +26,6 @@ public class BookingService {
 
     public Booking createBooking(User user, Room room, LocalDate date,
                                   LocalTime start, LocalTime end, String purpose) {
-        // Check for conflicts with existing bookings
         List<Booking> existing = bookingRepository.findByRoomAndDate(room, date);
         for (Booking b : existing) {
             if (b.getStatus() != Booking.BookingStatus.REJECTED &&
@@ -36,7 +36,6 @@ public class BookingService {
             }
         }
 
-        // Check for room locks
         List<RoomLock> locks = roomLockRepository.findByRoomAndDate(room, date);
         for (RoomLock lock : locks) {
             if (lock.getStartTime() == null || lock.getEndTime() == null) {
@@ -88,5 +87,23 @@ public class BookingService {
 
         booking.setStatus(Booking.BookingStatus.CANCELLED);
         bookingRepository.save(booking);
+    }
+
+    // ✅ NEW — confirm HOLD
+    public Booking confirmHold(Long bookingId, User user) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (!booking.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        if (booking.getStatus() != Booking.BookingStatus.HOLD) {
+            throw new RuntimeException("Booking is not in HOLD state");
+        }
+
+        booking.setStatus(Booking.BookingStatus.APPROVED);
+        booking.setHoldDeadline(null);
+        return bookingRepository.save(booking);
     }
 }

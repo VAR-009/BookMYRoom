@@ -1,21 +1,70 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icons } from '../components/Icons';
 import { useBooking } from '../contexts/BookingContext';
+import { holdBooking } from '../api/bookings';
 
 interface DashboardProps {
   role: 'student' | 'faculty';
   onNavigate: (view: string) => void;
 }
 
+// ✅ HOLD Banner Component
+const HoldBanner = ({ booking, onConfirm }: { booking: any, onConfirm: () => void }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const deadline = new Date(booking.holdDeadline);
+      const diff = deadline.getTime() - Date.now();
+      if (diff <= 0) {
+        setTimeLeft('Expired');
+        clearInterval(interval);
+      } else {
+        const mins = Math.floor(diff / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        setTimeLeft(`${mins}:${secs.toString().padStart(2, '0')}`);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [booking.holdDeadline]);
+
+  return (
+    <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 mb-4 flex items-center justify-between shadow">
+      <div>
+        <p className="font-bold text-yellow-800 text-lg">
+          ⚠️ Room on HOLD: {booking.roomName}
+        </p>
+        <p className="text-yellow-700 text-sm mt-1">
+          Booking started but presence not confirmed.
+          Time remaining: <span className="font-bold text-red-600">{timeLeft}</span>
+        </p>
+        <p className="text-yellow-600 text-xs mt-1">
+          Booking will be auto-cancelled after timeout.
+        </p>
+      </div>
+      <button
+        onClick={onConfirm}
+        className="ml-4 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-bold text-sm whitespace-nowrap"
+      >
+        ✅ HOLD MY ROOM
+      </button>
+    </div>
+  );
+};
+
 export const UserDashboard: React.FC<DashboardProps> = ({ role, onNavigate }) => {
   const { bookings, cancelBooking, refreshBookings } = useBooking();
 
   useEffect(() => {
     refreshBookings();
+    // Poll every 60 seconds to catch HOLD status changes from backend
+    const interval = setInterval(refreshBookings, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const upcomingBookings = bookings.filter(b => b.status === 'APPROVED');
   const pendingRequests = bookings.filter(b => b.status === 'PENDING');
+  const holdBookings = bookings.filter(b => b.status === 'HOLD'); // ✅ NEW
 
   const getDisplayName = () => {
     const saved = localStorage.getItem('userName');
@@ -25,12 +74,30 @@ export const UserDashboard: React.FC<DashboardProps> = ({ role, onNavigate }) =>
     return role === 'student' ? 'Student' : 'Professor';
   };
 
+  const handleHoldConfirm = async (bookingId: number) => {
+    try {
+      await holdBooking(bookingId);
+      refreshBookings();
+    } catch (e) {
+      console.error('Failed to confirm hold', e);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-gray-900">Welcome back, {getDisplayName()} 👋</h2>
         <p className="text-gray-600">You have <span className="font-semibold text-brand">{upcomingBookings.length} upcoming bookings</span> this week.</p>
       </div>
+
+      {/* ✅ HOLD BANNERS — show at top if any bookings are on hold */}
+      {holdBookings.map(b => (
+        <HoldBanner
+          key={b.id}
+          booking={b}
+          onConfirm={() => handleHoldConfirm(Number(b.id))}
+        />
+      ))}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">

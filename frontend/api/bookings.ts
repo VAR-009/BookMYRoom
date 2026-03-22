@@ -24,3 +24,9 @@ export const cancelBooking = async (id: number) => {
   const response = await api.put(`/bookings/cancel/${id}`);
   return response.data;
 };
+
+// ✅ NEW — HOLD booking
+export const holdBooking = async (id: number) => {
+  const response = await api.put(`/bookings/hold/${id}`);
+  return response.data;
+};

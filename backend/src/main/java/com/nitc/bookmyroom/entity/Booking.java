@@ -44,7 +44,11 @@ public class Booking {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public enum BookingStatus {
-        PENDING, APPROVED, REJECTED, CANCELLED
-    }
+   public enum BookingStatus {
+    PENDING, APPROVED, REJECTED, CANCELLED, HOLD, TIMED_OUT
+}
+
+    @Column(name = "hold_deadline")
+    private LocalDateTime holdDeadline;
+
 }

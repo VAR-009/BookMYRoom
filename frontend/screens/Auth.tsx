@@ -33,6 +33,11 @@ export const Auth: React.FC<AuthProps> = ({ mode, onSwitch, onLogin }) => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Something went wrong');
+
+      // ✅ Save name and email to localStorage
+      localStorage.setItem('userName', data.name);
+      localStorage.setItem('userEmail', data.email);
+
       onLogin(data.role?.toLowerCase(), data.token);
     } catch (err: any) {
       setError(err.message);

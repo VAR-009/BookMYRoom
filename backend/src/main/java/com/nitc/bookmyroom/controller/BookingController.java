@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -108,18 +109,32 @@ public class BookingController {
         }
     }
 
+    // ✅ HOLD endpoint
+    @PutMapping("/hold/{id}")
+    public ResponseEntity<?> holdBooking(@PathVariable Long id,
+                                         @RequestHeader("Authorization") String authHeader) {
+        try {
+            User user = getUserFromToken(authHeader);
+            bookingService.confirmHold(id, user);
+            return ResponseEntity.ok(Map.of("message", "Booking confirmed! Room is yours."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     private Map<String, Object> toMap(Booking b) {
-        return Map.of(
-            "id", b.getId(),
-            "roomId", b.getRoom().getId(),
-            "roomName", b.getRoom().getName(),
-            "roomType", b.getRoom().getType(),
-            "date", b.getDate().toString(),
-            "startTime", b.getStartTime().toString(),
-            "endTime", b.getEndTime().toString(),
-            "purpose", b.getPurpose() != null ? b.getPurpose() : "",
-            "status", b.getStatus().name(),
-            "userName", b.getUser().getName()
-        );
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", b.getId());
+        map.put("roomId", b.getRoom().getId());
+        map.put("roomName", b.getRoom().getName());
+        map.put("roomType", b.getRoom().getType());
+        map.put("date", b.getDate().toString());
+        map.put("startTime", b.getStartTime().toString());
+        map.put("endTime", b.getEndTime().toString());
+        map.put("purpose", b.getPurpose() != null ? b.getPurpose() : "");
+        map.put("status", b.getStatus().name());
+        map.put("userName", b.getUser().getName());
+        map.put("holdDeadline", b.getHoldDeadline() != null ? b.getHoldDeadline().toString() : null); // ✅
+        return map;
     }
 }

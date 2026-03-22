@@ -14,6 +14,8 @@ import { ChangePassword } from './screens/ChangePassword';
 import { Navbar } from './components/Navbar';
 import { LocksProvider } from './contexts/LocksContext';
 import { BookingProvider } from './contexts/BookingContext';
+import { HistoryProvider } from './contexts/HistoryContext'; // ✅ ADD THIS
+
 
 const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<ScreenView>(ScreenView.AUTH_SIGNIN);
@@ -205,10 +207,12 @@ const App: React.FC = () => {
     }
   };
 
-  return (
+   return (
     <LocksProvider>
       <BookingProvider>
-        {renderScreen()}
+        <HistoryProvider>  {/* ✅ ADD THIS */}
+          {renderScreen()}
+        </HistoryProvider>  {/* ✅ ADD THIS */}
       </BookingProvider>
     </LocksProvider>
   );
