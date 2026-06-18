@@ -1,4 +1,4 @@
-# Group12_BookMYRoom
+# BookMYRoom
 
 
 ## Problem Statement
@@ -30,12 +30,3 @@ The system follows a **Role-Based Access Control (RBAC)** model where different 
 
 ---
 
-## Contribution Table
-
-| Name | Module | Contribution |
-|-----|-----|-----|
-| Asif Mohammed | Student Module | Developed student dashboard and all booking features|
-| Varun Y  | Admin Module | Developed admin dashboard and room management features |
-| Harsha krishna | Admin Module | Developed room approval workflow and live status management|
-| Hari Vamsi | Faculty Module | Implemented faculty booking interface and booking management |
-| Sai charan | Faculty Module |  Implemented faculty booking interface and booking management|
